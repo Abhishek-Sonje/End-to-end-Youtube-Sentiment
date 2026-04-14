@@ -1,7 +1,12 @@
 import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend before importing pyplot
 
-from flask import Flask, request, jsonify, send_file
+import os
+import requests
+from dotenv import load_dotenv
+from urllib.parse import urlparse, parse_qs
+
+from flask import Flask, request, jsonify, send_file, render_template
 from flask_cors import CORS
 import io
 import matplotlib.pyplot as plt
@@ -16,8 +21,13 @@ from mlflow.tracking import MlflowClient
 import matplotlib.dates as mdates
 import pickle
 
+load_dotenv()
+YOUTUBE_API_KEY = os.getenv('YOUTUBE_API_KEY')
+if not YOUTUBE_API_KEY:
+    raise RuntimeError("Missing YOUTUBE_API_KEY in environment variables")
+
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app, resources={r"/analyze-video": {"origins": "*"}})
 
 # Define the preprocessing function
 def preprocess_comment(comment):
@@ -86,7 +96,102 @@ model, vectorizer = load_model("lgbm_model.pkl", "tfidf_vectorizer.pkl")
 
 @app.route('/')
 def home():
-    return "Welcome to our flask api"
+    return render_template('index.html')
+
+def extract_video_id(url):
+    try:
+        parsed_url = urlparse(url)
+        if parsed_url.hostname in ('youtu.be', 'www.youtu.be'):
+            return parsed_url.path[1:]
+        if parsed_url.hostname in ('youtube.com', 'www.youtube.com'):
+            if parsed_url.path == '/watch':
+                query = parse_qs(parsed_url.query)
+                return query.get('v', [None])[0]
+            if parsed_url.path.startswith('/shorts/'):
+                return parsed_url.path.split('/')[2]
+    except Exception:
+        pass
+    return None
+
+@app.route('/analyze-video', methods=['POST'])
+def analyze_video():
+    try:
+        data = request.json
+        if not data or 'url' not in data:
+            return jsonify({"error": "Invalid or missing YouTube URL"}), 400
+        
+        url = data['url']
+        video_id = extract_video_id(url)
+        if not video_id:
+            return jsonify({"error": "Could not extract video ID from URL"}), 400
+
+        # Fetch comments API
+        comments = []
+        next_page = None
+        
+        for _ in range(2):
+            params = {
+                'part': 'snippet',
+                'videoId': video_id,
+                'maxResults': 100,
+                'textFormat': 'plainText',
+                'key': YOUTUBE_API_KEY
+            }
+            if next_page:
+                params['pageToken'] = next_page
+            
+            response = requests.get('https://www.googleapis.com/youtube/v3/commentThreads', params=params)
+            
+            if response.status_code != 200:
+                err_msg = response.json().get('error', {}).get('message', 'Unknown API error')
+                return jsonify({"error": f"YouTube API request failed: {err_msg}"}), 502
+                
+            res_json = response.json()
+            items = res_json.get('items', [])
+            
+            for item in items:
+                text = item['snippet']['topLevelComment']['snippet']['textOriginal']
+                comments.append(text)
+                
+            next_page = res_json.get('nextPageToken')
+            if not next_page or len(comments) >= 100:
+                break
+                
+        if not comments:
+            return jsonify({"error": "No comments found for this video"}), 404
+
+        # Strictly max 100
+        comments = comments[:100]
+
+        # Use same processing pipeline
+        preprocessed_comments = [preprocess_comment(c) for c in comments]
+        transformed_comments = vectorizer.transform(preprocessed_comments)
+        dense_comments = transformed_comments.toarray()
+        
+        predictions = model.predict(dense_comments).tolist()
+
+        results = []
+        pos, neg, neu = 0, 0, 0
+        
+        for c, s in zip(comments, predictions):
+            val = int(s)
+            results.append({"comment": c, "sentiment": val})
+            if val == 1: pos += 1
+            elif val == -1: neg += 1
+            else: neu += 1
+
+        return jsonify({
+            "video_id": video_id,
+            "total": len(results),
+            "positive": pos,
+            "negative": neg,
+            "neutral": neu,
+            "results": results
+        })
+
+    except Exception as e:
+        app.logger.error(f"Error in /analyze-video: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
 
 
 

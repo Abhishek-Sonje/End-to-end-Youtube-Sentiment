@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YT Sentiment</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-white min-h-screen">
+    <div class="max-w-screen-lg mx-auto px-4 py-12 md:py-24">
+        <!-- HEADER -->
+        <header class="mb-12">
+            <h1 class="text-6xl md:text-8xl font-serif text-black uppercase mb-4 tracking-tighter title-serif">YT Sentiment</h1>
+            <hr class="border-t-[3px] border-black mb-4">
+            <p class="text-lg md:text-xl font-mono text-black uppercase subtitle-mono">Analyze the mood of any YouTube video</p>
+        </header>
+
+        <!-- INPUT SECTION -->
+        <section class="mb-16">
+            <form id="analyze-form" class="flex flex-col sm:flex-row gap-0">
+                <input 
+                    type="text" 
+                    id="youtube-url" 
+                    placeholder="Paste YouTube URL here..." 
+                    class="flex-1 border-[3px] border-black p-4 font-mono text-lg focus:outline-none focus:bg-gray-50 rounded-none w-full mb-4 sm:mb-0 sm:border-r-0"
+                    required
+                >
+                <button 
+                    type="submit" 
+                    id="submit-btn" 
+                    class="bg-black text-white px-8 py-4 font-mono text-xl uppercase border-[3px] border-black hover-invert transition-colors rounded-none w-full sm:w-auto font-bold"
+                >
+                    Analyze
+                </button>
+            </form>
+            <div id="error-message" class="text-red-600 font-mono mt-4 hidden text-sm font-bold uppercase border-l-4 border-red-600 pl-3"></div>
+        </section>
+
+        <!-- CONTENT AREA (Dynamic) -->
+        <div id="content-area">
+            <!-- EMPTY STATE -->
+            <div id="empty-state" class="flex flex-col items-center justify-center py-16 animation-fade-in">
+                <div class="bauhaus-illustration relative w-48 h-48 mb-8">
+                    <div class="absolute w-24 h-24 bg-red-600 rounded-full top-0 left-0 mix-blend-multiply border-2 border-black"></div>
+                    <div class="absolute w-24 h-24 bg-blue-600 top-12 left-12 mix-blend-multiply border-2 border-black"></div>
+                    <div class="absolute w-32 h-12 bg-yellow-400 bottom-4 right-0 transform -rotate-12 mix-blend-multiply border-2 border-black"></div>
+                </div>
+                <p class="font-mono text-gray-500 uppercase tracking-widest text-sm text-center">Awaiting Video Input</p>
+            </div>
+
+            <!-- LOADING STATE -->
+            <div id="loading-state" class="hidden flex flex-col items-center justify-center py-24 animation-fade-in">
+                <div class="w-16 h-16 border-[4px] border-black loading-spinner mb-6 rounded-none"></div>
+                <p class="font-mono text-black uppercase tracking-widest text-sm animate-pulse">Fetching comments...</p>
+            </div>
+
+            <!-- RESULTS STATE -->
+            <div id="results-state" class="hidden animation-fade-in">
+                <!-- STATS SECTION -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="stat-card border-[3px] border-black p-6 pl-5 border-l-8 border-l-positive bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover-lift">
+                        <div id="stat-positive" class="text-6xl md:text-7xl font-serif mb-2 title-serif">0</div>
+                        <div class="font-mono text-sm uppercase tracking-wider font-bold">Positive</div>
+                    </div>
+                    <div class="stat-card border-[3px] border-black p-6 pl-5 border-l-8 border-l-negative bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover-lift">
+                        <div id="stat-negative" class="text-6xl md:text-7xl font-serif mb-2 title-serif">0</div>
+                        <div class="font-mono text-sm uppercase tracking-wider font-bold">Negative</div>
+                    </div>
+                    <div class="stat-card border-[3px] border-black p-6 pl-5 border-l-8 border-l-gray-500 bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover-lift">
+                        <div id="stat-neutral" class="text-6xl md:text-7xl font-serif mb-2 title-serif">0</div>
+                        <div class="font-mono text-sm uppercase tracking-wider font-bold text-gray-600">Neutral</div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between items-end border-b-[3px] border-black pb-2 mb-8 mt-12">
+                    <h2 class="text-2xl md:text-4xl font-serif uppercase title-serif">Comments</h2>
+                    <div class="font-mono text-sm uppercase font-bold text-gray-500" id="total-comments">Total: 0</div>
+                </div>
+
+                <!-- COMMENT LIST -->
+                <div id="comment-list" class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-24">
+                    <!-- Comments injected here via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

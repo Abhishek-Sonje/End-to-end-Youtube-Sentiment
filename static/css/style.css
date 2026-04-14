@@ -1,0 +1,122 @@
+:root {
+  --black: #0a0a0a;
+  --white: #f5f5f0;
+  --red: #e63329;
+  --blue: #1a3aff;
+  --yellow: #f5c800;
+  --gray: #8a8a8a;
+  --positive: #1a7a4a;
+  --negative: #c0392b;
+  --neutral: #5a5a5a;
+}
+
+body {
+  background-color: var(--white);
+  color: var(--black);
+}
+
+.title-serif {
+  font-family: 'DM Serif Display', serif;
+}
+
+.subtitle-mono,
+.font-mono {
+  font-family: 'DM Mono', monospace;
+}
+
+.hover-invert:hover {
+  background-color: var(--white);
+  color: var(--black);
+}
+
+.loading-spinner {
+  animation: rotateSquare 1.5s infinite linear;
+}
+
+@keyframes rotateSquare {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animation-fade-in {
+  opacity: 0;
+  animation: fadeIn 0.8s ease forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 12px 12px 0px 0px rgba(10, 10, 10, 1) !important;
+}
+
+.comment-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.comment-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 6px 6px 0px 0px rgba(10, 10, 10, 1) !important;
+}
+
+/* Custom component classes */
+.border-l-positive {
+  border-left-color: var(--positive) !important;
+}
+
+.border-l-negative {
+  border-left-color: var(--negative) !important;
+}
+
+.border-l-neutral {
+  border-left-color: var(--gray) !important;
+}
+
+.badge-positive {
+  background-color: var(--positive);
+  color: var(--white);
+}
+
+.badge-negative {
+  background-color: var(--negative);
+  color: var(--white);
+}
+
+.badge-neutral {
+  background-color: var(--gray);
+  color: var(--white);
+}
+
+.bg-red-600 {
+  background-color: var(--red);
+  border-color: var(--black) !important;
+}
+
+.bg-blue-600 {
+  background-color: var(--blue);
+  border-color: var(--black) !important;
+}
+
+.bg-yellow-400 {
+  background-color: var(--yellow);
+  border-color: var(--black) !important;
+}
